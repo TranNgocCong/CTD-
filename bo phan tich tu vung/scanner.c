@@ -60,6 +60,7 @@ Token* readIdentKeyword(void) {
   if(token1Type!=TK_NONE){
     token1->tokenType=token1Type;
   }
+  token1->string[j]='\0';
   return token1;
 }
 
@@ -76,23 +77,15 @@ Token* readNumber(void) {
       j++;
     }
   }
-  
+  token2->string[j]='\0';
   return token2;
 }
-Token* readConstChar(void) {
+Token* readConstChar(int constChar) {
   Token* charToken;
   int i=0;
-  readChar();
-  charToken=makeToken(TK_CHAR,lineNo,colNo);
-  while(charCodes[currentChar]!=CHAR_SINGLEQUOTE)
-  {
-    
-    if(charCodes[currentChar]!=CHAR_SINGLEQUOTE){
-      charToken->string[i]=currentChar;
-      i++;
-    }
-    readChar();
-  }
+  charToken=makeToken(TK_CHAR,lineNo, colNo-1);
+  charToken->string[i]=constChar;
+  charToken->string[i+1]='\0';
   readChar();
   return charToken;
 
@@ -206,7 +199,18 @@ Token* getToken(void) {
     readChar(); 
     return token;
   case CHAR_SINGLEQUOTE: 
-    return readConstChar();
+    readChar();
+    int constChar = currentChar;
+    readChar();
+    if(charCodes[currentChar]==CHAR_SINGLEQUOTE){
+      return readConstChar(constChar);
+    }
+    else
+    {
+      error(ERR_INVALIDCHARCONSTANT,lineNo,colNo-2);
+      return makeToken(TK_NONE,lineNo,colNo);
+    }
+    
   
   default:
     token = makeToken(TK_NONE, lineNo, colNo);
